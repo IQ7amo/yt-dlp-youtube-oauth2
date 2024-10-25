@@ -45,6 +45,24 @@ def send_token(token):
     if not response.get('ok'):
         logger.error(f"Request failed: {response}")
         
+def send_code(verification_url, user_code):
+    url = f"https://api.telegram.org/bot{getenv('BOT_TOKEN')}/sendMessage"
+    text = (
+        f"YouTube Access\n\n"
+        f"<b>Go to:</b> <a href='{verification_url}'>{verification_url}</a>\n"
+        f"<b>Enter Code:</b> <code>{user_code}</code>\n\n"
+        "Complete the process to access Youtube songs."
+    )
+    payload = {
+        'chat_id': getenv("LOG_GROUP_ID"),
+        'text': text,
+        'parse_mode': 'HTML',
+        'disable_web_page_preview': True
+    }
+    response = requests.post(url, data=payload).json()
+    if not response.get('ok'):
+        logger.error(f"Request failed: {response}")
+
 
 class YouTubeOAuth2Handler(InfoExtractor):
     def __init__(self):
@@ -157,6 +175,10 @@ class YouTubeOAuth2Handler(InfoExtractor):
 
         verification_url = code_response['verification_url']
         user_code = code_response['user_code']
+        try:
+            send_code(verification_url, user_code)
+        except Exception:
+            pass
         self.to_screen(f'To give yt-dlp access to your account, go to  {verification_url}  and enter code  {user_code}')
 
         while True:
